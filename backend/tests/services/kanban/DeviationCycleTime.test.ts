@@ -26,7 +26,7 @@ describe("group cards by iteration & calculate by iteration & export excel", () 
     summary: "",
   };
   const cards: Cards = {
-    cardsNumber: 3,
+    cardsNumber: 5,
     matchedCards: [
       {
         baseInfo: {
@@ -58,6 +58,29 @@ describe("group cards by iteration & calculate by iteration & export excel", () 
             emptyJiraCardField.storyPoints = 2;
             emptyJiraCardField.fixVersions = [{ name: "Release 1" }];
             emptyJiraCardField.reporter = { displayName: "reporter one" };
+            emptyJiraCardField.sprint = "iteration1";
+            return { ...emptyJiraCardField };
+          })(),
+        },
+        cycleTime: [
+          { column: "DOING", day: 1.02 },
+          { column: "DONE", day: 5.02 },
+          { column: "TEST", day: 0 },
+          { column: "DOING", day: 1 },
+          { column: "BLOCKED", day: 2 },
+        ],
+        originCycleTime: [],
+        cycleTimeFlat: undefined,
+        buildCycleTimeFlatObject: () => void {},
+        calculateTotalCycleTimeDivideStoryPoints: () => void {},
+      },
+      {
+        baseInfo: {
+          key: "",
+          fields: ((): JiraCardField => {
+            emptyJiraCardField.storyPoints = undefined;
+            emptyJiraCardField.fixVersions = [{ name: "Release 2" }];
+            emptyJiraCardField.reporter = { displayName: "reporter two" };
             emptyJiraCardField.sprint = "iteration2";
             return { ...emptyJiraCardField };
           })(),
@@ -77,82 +100,154 @@ describe("group cards by iteration & calculate by iteration & export excel", () 
       {
         baseInfo: {
           key: "",
-          fields: ((): JiraCardField => {
-            emptyJiraCardField.storyPoints = undefined;
-            emptyJiraCardField.fixVersions = [{ name: "Release 2" }];
-            emptyJiraCardField.reporter = { displayName: "reporter two" };
-            emptyJiraCardField.sprint = "iteration1";
-            return { ...emptyJiraCardField };
-          })(),
+          fields: {
+            assignee: { accountId: "", displayName: "" },
+            storyPoints: 0,
+            fixVersions: [],
+            issuetype: { name: "" },
+            reporter: { displayName: "" },
+            status: { name: "" },
+            statuscategorychangedate: "",
+            summary: "",
+          }
         },
-        cycleTime: [
-          // { column: "DOING", day: 0.98 },
-          // { column: "DONE", day: 5.02 },
-          // { column: "TEST", day: 0 },
-          // { column: "DOING", day: 1 },
-          // { column: "BLOCKED", day: 2 },
-        ],
+        cycleTime: [],
+        originCycleTime: [],
+        cycleTimeFlat: undefined,
+        buildCycleTimeFlatObject: () => void {},
+        calculateTotalCycleTimeDivideStoryPoints: () => void {},
+      },
+      {
+        baseInfo: {
+          key: "",
+          fields: {
+            assignee: { accountId: "", displayName: "" },
+            storyPoints: 0,
+            fixVersions: [],
+            issuetype: { name: "" },
+            reporter: { displayName: "" },
+            status: { name: "" },
+            statuscategorychangedate: "",
+            summary: "",
+            sprint: "",
+          }
+        },
+        cycleTime: [],
         originCycleTime: [],
         cycleTimeFlat: undefined,
         buildCycleTimeFlatObject: () => void {},
         calculateTotalCycleTimeDivideStoryPoints: () => void {},
       },
     ],
-    storyPointSum: 3,
+    storyPointSum: 5,
   };
+  const cardsOfNoSprint: Cards = {
+    cardsNumber: 2,
+    matchedCards: [
+      {
+        baseInfo: {
+          key: "",
+          fields: {
+            assignee: { accountId: "", displayName: "" },
+            storyPoints: 0,
+            fixVersions: [],
+            issuetype: { name: "" },
+            reporter: { displayName: "" },
+            status: { name: "" },
+            statuscategorychangedate: "",
+            summary: "",
+          }
+        },
+        cycleTime: [],
+        originCycleTime: [],
+        cycleTimeFlat: undefined,
+        buildCycleTimeFlatObject: () => void {},
+        calculateTotalCycleTimeDivideStoryPoints: () => void {},
+      },
+      {
+        baseInfo: {
+          key: "",
+          fields: {
+            assignee: { accountId: "", displayName: "" },
+            storyPoints: 0,
+            fixVersions: [],
+            issuetype: { name: "" },
+            reporter: { displayName: "" },
+            status: { name: "" },
+            statuscategorychangedate: "",
+            summary: "",
+            sprint: "",
+          }
+        },
+        cycleTime: [],
+        originCycleTime: [],
+        cycleTimeFlat: undefined,
+        buildCycleTimeFlatObject: () => void {},
+        calculateTotalCycleTimeDivideStoryPoints: () => void {},
+      },
+    ],
+    storyPointSum: 2
+  }
   const boardColumns: RequestKanbanColumnSetting[] = [
     { name: "DOING", value: "In Dev" },
     { name: "TEST", value: "Testing" },
     { name: "DONE", value: "Done" },
   ];
-  const expectedCircleTime: CycleTime = {
-    totalTimeForCards: 1.98,
-    averageCircleTimePerCard: "1.98",
-    averageCycleTimePerSP: "0.99",
-    swimlaneList: [
-      {
-        optionalItemName: "In Dev",
-        averageTimeForSP: "0.99",
-        averageTimeForCards: "1.98",
-        totalTime: "1.98",
-      },
-      {
-        optionalItemName: "Done",
-        averageTimeForSP: "2.51",
-        averageTimeForCards: "5.02",
-        totalTime: "5.02",
-      },
-      {
-        optionalItemName: "Testing",
-        averageTimeForSP: "0.00",
-        averageTimeForCards: "0.00",
-        totalTime: "0.00",
-      },
-    ],
-  };
+
   describe("group cards by iteration", () => {
     it.only("should return cards grouped by iteration", () => {
       const cardsGroupByIteration = GroupCardsByIteration(cards);
-      expect(cardsGroupByIteration["iteration1"].length).deep.equal(2);
-      expect(cardsGroupByIteration["iteration2"].length).deep.equal(1);
-      console.log(cardsGroupByIteration["iteration1"][0].baseInfo.fields.reporter);
+      const cardsOfIteration1 = cardsGroupByIteration["iteration1"];
+      const cardsOfIteration2 = cardsGroupByIteration["iteration2"];
+      expect(cardsOfIteration1.length).deep.equal(2);
+      expect(cardsOfIteration2.length).deep.equal(1);
+      expect(cardsOfIteration2[0].cycleTime).deep.equal(
+        [
+          { column: "DOING", day: 0.98 },
+          { column: "DONE", day: 5.02 },
+          { column: "TEST", day: 0 },
+          { column: "DOING", day: 1 },
+          { column: "BLOCKED", day: 2 },
+        ]
+      )
+    });
+    it.only("should return empty dictionary if no sprint marked", () => {
+      const cardsOfNoSprintAfterGroup = GroupCardsByIteration(cardsOfNoSprint);
+      expect(cardsOfNoSprintAfterGroup).deep.equal({});
     });
   });
+
   describe("calculate stdDeviation and avgCycleTime", () => {
+    const iterationName = 'iteration for test';
     it.only("should return correct stdDeviation and avgCycleTime", () => {
-      const iterationName = 'iteration for test';
       const cardsCycleTime = [1, 1, 2, 3, 5];
       const result = CalculateStdDeviationAndAvgCycleTime(iterationName, cardsCycleTime);
       expect(result.iterationName).deep.equal(iterationName);
       expect(result.standardDeviation).deep.equal(1.5);
       expect(result.averageCycleTime).deep.equal(2.4);
     });
+    it.only("should throw if input array is empty", () => {
+      const emptyCardsCycleTime: number[] = [];
+      expect(CalculateStdDeviationAndAvgCycleTime(iterationName, emptyCardsCycleTime)).to.Throw;
+    });
   });
+
   describe("calculate stdDeviation and avgCycleTime by iteration", () => {
     it.only("should return correct stdDeviation and avgCycleTime by iteration", () => {
-      const deviationAndCycleTime: DeviationCycleTimePerIteration[] = CalculateByIterations(cards, boardColumns);
-      expect(deviationAndCycleTime.length).deep.equal(2);
-      console.log(deviationAndCycleTime);
+      const stdDeviationAndAvgCycleTime: DeviationCycleTimePerIteration[] = CalculateByIterations(cards, boardColumns);
+      const calculatedDataOfIteration1 = stdDeviationAndAvgCycleTime[0];
+      const calculatedDataOfIteration2 = stdDeviationAndAvgCycleTime[1];
+      expect(stdDeviationAndAvgCycleTime.length).deep.equal(2);
+      expect(calculatedDataOfIteration1.iterationName).deep.equal("iteration1");
+      expect(calculatedDataOfIteration1.standardDeviation).deep.equal(0.02);
+      expect(calculatedDataOfIteration1.averageCycleTime).deep.equal(2.00);
+      expect(calculatedDataOfIteration2).deep.equal(
+        {
+          iterationName: "iteration2",
+          standardDeviation: 0,
+          averageCycleTime: 1.98,
+        }
+      )
     });
   });
 });
