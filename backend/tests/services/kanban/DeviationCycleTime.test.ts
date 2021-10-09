@@ -187,7 +187,7 @@ describe("group cards by iteration & calculate by iteration & export excel", () 
       },
     ],
     storyPointSum: 2
-  }
+  };
   const boardColumns: RequestKanbanColumnSetting[] = [
     { name: "DOING", value: "In Dev" },
     { name: "TEST", value: "Testing" },
@@ -209,7 +209,7 @@ describe("group cards by iteration & calculate by iteration & export excel", () 
           { column: "DOING", day: 1 },
           { column: "BLOCKED", day: 2 },
         ]
-      )
+      );
     });
     it.only("should return empty dictionary if no sprint marked", () => {
       const cardsOfNoSprintAfterGroup = GroupCardsByIteration(cardsOfNoSprint);
@@ -218,7 +218,7 @@ describe("group cards by iteration & calculate by iteration & export excel", () 
   });
 
   describe("calculate stdDeviation and avgCycleTime", () => {
-    const iterationName = 'iteration for test';
+    const iterationName = "iteration for test";
     it.only("should return correct stdDeviation and avgCycleTime", () => {
       const cardsCycleTime = [1, 1, 2, 3, 5];
       const result = CalculateStdDeviationAndAvgCycleTime(iterationName, cardsCycleTime);
@@ -247,7 +247,7 @@ describe("group cards by iteration & calculate by iteration & export excel", () 
           standardDeviation: 0,
           averageCycleTime: 1.98,
         }
-      )
+      );
     });
   });
 });
