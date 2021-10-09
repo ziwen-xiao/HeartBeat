@@ -1,16 +1,11 @@
 import "mocha";
 import { Cards } from "../../../src/models/kanban/RequestKanbanResults";
-import { JiraCard, JiraCardField } from "../../../src/models/kanban/JiraCard";
-import { TargetField } from "../../../src/contract/kanban/KanbanTokenVerifyResponse";
-import { ClassificationField, CycleTime } from "../../../src/contract/GenerateReporter/GenerateReporterResponse";
-import { getClassificationOfSelectedFields } from "../../../src/services/kanban/Classification";
+import { JiraCardField } from "../../../src/models/kanban/JiraCard";
 import { expect } from "chai";
 import { CalculateByIterations, CalculateStdDeviationAndAvgCycleTime, GroupCardsByIteration } from "../../../src/services/kanban/CalculateCycleTime";
-import { keys } from "lodash";
 import { RequestKanbanColumnSetting } from "../../../src/contract/GenerateReporter/GenerateReporterRequestBody";
-import { CycleTimeInfo, JiraCardResponse } from "../../../src/contract/kanban/KanbanStoryPointResponse";
-import { Dictionary } from "lodash";
 import { DeviationCycleTimePerIteration } from "../../../src/models/kanban/DeviationCycleTimePerIteration";
+import { writeToExcel } from "../../../src/services/common/GenarateExcelFile";
 
 // "测试deviation以及cycletime计算准确性，测试分组正确，测试exportExcel"
 
@@ -250,4 +245,10 @@ describe("group cards by iteration & calculate by iteration & export excel", () 
       );
     });
   });
+
+  describe("write correct calculated data including stdDeviation and avgCycleTime to excel file", () => {
+    it.only("should write data to excel successfully", () => {
+      writeToExcel(cards, boardColumns);
+    })
+  })
 });
