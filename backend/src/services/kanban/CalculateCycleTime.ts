@@ -10,6 +10,9 @@ import { RequestKanbanColumnSetting } from "../../contract/GenerateReporter/Gene
 import { CardCycleTime, StepsDay } from "../../models/kanban/CardCycleTime";
 import { CardStepsEnum } from "../../models/kanban/CardStepsEnum";
 import { Cards } from "../../models/kanban/RequestKanbanResults";
+import _, { groupBy } from "lodash";
+import { Dictionary } from "lodash";
+import { DeviationCycleTimePerIteration } from "../../models/kanban/DeviationCycleTimePerIteration";
 
 function selectedStepsArrayToMap(
   boardColumns: RequestKanbanColumnSetting[]
@@ -57,9 +60,9 @@ function addAllCardsTimeUpForEachStep(
   return tempSwimlaneMap;
 }
 
-export function dealNaN(result: number, unit: string): string {
-  if (isNaN(result) || result == Infinity) return "None";
-  return result.toFixed(2) + unit;
+export function dealNaN(deviationAndCycleTime: number, unit: string): string {
+  if (isNaN(deviationAndCycleTime) || deviationAndCycleTime == Infinity) return "None";
+  return deviationAndCycleTime.toFixed(2) + unit;
 }
 
 const calculateAverageTimeAndTotalTime = (
@@ -167,4 +170,55 @@ export function CalculateCardCycleTime(
     stepsDay,
     +total.toFixed(2)
   );
+}
+
+export function CalculateStdDeviationAndAvgCycleTime(
+  iterationName: string,
+  cardsCycleTime: number[]
+): DeviationCycleTimePerIteration {
+  if (cardsCycleTime.length === 0) {
+      return new DeviationCycleTimePerIteration("",0,0);
+  }
+  const total = cardsCycleTime.length;
+  const sum = cardsCycleTime.reduce((x, y) => x + y);
+  const avgCycleTime = Number((sum / total).toFixed(2));
+  const stdDeviation = Number(Math.sqrt(
+                                cardsCycleTime
+                                  .map((jiraCardResponse) => Math.pow((jiraCardResponse - avgCycleTime), 2))
+                                  .reduce((x, y) => x + y ) / total)
+                                  .toFixed(2)
+                              );
+  return new DeviationCycleTimePerIteration(iterationName, stdDeviation, avgCycleTime);
+}
+
+// target：输入cards，按iteration将cards分组，计算分组后的cards的stdDeviation和avgCycleTime，将计算的数据放在excel表格中输出
+// task1: 输入cards，按iteration分组，得到分组后的结果
+// task2: 输入分组后的cards，计算avgCycleTime
+// task3: 输入分组后的cards，计算stdDeviation
+// task4: iteration/stdDeviation/avgCycleTime对象属性
+
+// task1: 分组
+export function GroupCardsByIteration(
+  cards: Cards
+): Dictionary<JiraCardResponse[]> {
+  const matchedCards = cards.matchedCards.filter(
+    item => item.baseInfo.fields.sprint && item.baseInfo.fields.sprint !== ""
+  );
+  return groupBy(matchedCards, (jiraCardResponse) => jiraCardResponse.baseInfo.fields.sprint);
+}
+
+// task2/3: 计算avgCycleTime以及stdDeviation
+export function CalculateByIterations(
+  cards: Cards,
+  boardColumns: RequestKanbanColumnSetting[]
+): DeviationCycleTimePerIteration[] {
+  const cardsGroupByIteration = GroupCardsByIteration(cards);
+  const deviationAndCycleTime = Object.keys(cardsGroupByIteration).map(
+    (key) => { 
+      const matchedCardsByIteration: JiraCardResponse[] = cardsGroupByIteration[key];
+      const cardCycleTime: number[] = matchedCardsByIteration.map((jiraCardResponse) => CalculateCardCycleTime(jiraCardResponse, boardColumns).total);
+      return CalculateStdDeviationAndAvgCycleTime(key, cardCycleTime);
+    }
+  );
+  return deviationAndCycleTime;
 }
