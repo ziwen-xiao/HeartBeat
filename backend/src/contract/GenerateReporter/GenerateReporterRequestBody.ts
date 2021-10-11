@@ -232,3 +232,81 @@ export class GenerateReportRequest {
   })
   csvTimeStamp = 0;
 }
+
+@swaggerClass()
+export class GenerateExcelRequest {
+  @swaggerProperty({
+    type: "object",
+    required: false,
+    properties: (RequestKanbanSetting as any).swaggerDocument,
+    example: {
+      type: "jira",
+      token: "Basic XXXXXX",
+      site: "dorametrics",
+      project: "ADM",
+      boardId: 2,
+      doneColumn: ["DONE"],
+      boardColumns: [
+        {
+          name: "TODO",
+          value: "TODO",
+        },
+        {
+          name: "BLOCKED",
+          value: "BLOCKED",
+        },
+        {
+          name: "DOING",
+          value: "DOING",
+        },
+        {
+          name: "TESTING",
+          value: "TESTING",
+        },
+      ],
+      users: [
+        "Jian Lv",
+        "Lefei Ren",
+        "LULU YANG",
+        "mazr",
+        "Qian Zhang",
+        "Qiqi Jiao",
+        "Xueqing Bai",
+        "yupeng",
+        "Yuxuan Bi",
+        "Zhibin Song",
+      ],
+      targetFields: [
+        {
+          key: "fixVersions",
+          name: "修复版本",
+          flag: true,
+        },
+        {
+          key: "priority",
+          name: "优先级",
+          flag: true,
+        },
+      ],
+      treatFlagCardAsBlock: true,
+    },
+  })
+  kanbanSetting: RequestKanbanSetting = new RequestKanbanSetting();
+
+  @swaggerProperty({
+    type: "number",
+    required: true,
+    example: new Date().getTime() - 7 * 1000 * 60 * 60 * 24,
+  })
+  startTime = 0;
+
+  @swaggerProperty({
+    type: "number",
+    required: true,
+    example: new Date().getTime(),
+  })
+  endTime = 0;
+
+  @swaggerProperty({ type: "number", required: false, example: true })
+  considerHoliday: boolean = true;
+}
