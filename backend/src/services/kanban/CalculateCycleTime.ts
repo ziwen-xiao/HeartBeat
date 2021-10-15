@@ -13,6 +13,8 @@ import { Cards } from "../../models/kanban/RequestKanbanResults";
 import _, { groupBy } from "lodash";
 import { Dictionary } from "lodash";
 import { DeviationCycleTimePerIteration } from "../../models/kanban/DeviationCycleTimePerIteration";
+import { CompletedCardsBySprint } from "../../models/kanban/CompletedCardsBySprint";
+import { DevelopingAndBlockTimeBySprint } from "../../models/kanban/DevelopingAndBlockTimeBySprint";
 
 function selectedStepsArrayToMap(
   boardColumns: RequestKanbanColumnSetting[]
@@ -177,17 +179,17 @@ export function CalculateStdDeviationAndAvgCycleTime(
   cardsCycleTime: number[]
 ): DeviationCycleTimePerIteration {
   if (cardsCycleTime.length === 0) {
-      return new DeviationCycleTimePerIteration("",0,0);
+    throw new Error("no cards cycletime to be calculated");
   }
   const total = cardsCycleTime.length;
   const sum = cardsCycleTime.reduce((x, y) => x + y);
   const avgCycleTime = Number((sum / total).toFixed(2));
   const stdDeviation = Number(Math.sqrt(
-                                cardsCycleTime
-                                  .map((jiraCardResponse) => Math.pow((jiraCardResponse - avgCycleTime), 2))
-                                  .reduce((x, y) => x + y ) / total)
-                                  .toFixed(2)
-                              );
+    cardsCycleTime
+      .map((jiraCardResponse) => Math.pow((jiraCardResponse - avgCycleTime), 2))
+      .reduce((x, y) => x + y) / total)
+    .toFixed(2)
+  );
   return new DeviationCycleTimePerIteration(iterationName, stdDeviation, avgCycleTime);
 }
 
@@ -208,17 +210,56 @@ export function GroupCardsByIteration(
 }
 
 // task2/3: 计算avgCycleTime以及stdDeviation
-export function CalculateByIterations(
-  cards: Cards,
-  boardColumns: RequestKanbanColumnSetting[]
-): DeviationCycleTimePerIteration[] {
-  const cardsGroupByIteration = GroupCardsByIteration(cards);
-  const deviationAndCycleTime = Object.keys(cardsGroupByIteration).map(
-    (key) => { 
-      const matchedCardsByIteration: JiraCardResponse[] = cardsGroupByIteration[key];
-      const cardCycleTime: number[] = matchedCardsByIteration.map((jiraCardResponse) => CalculateCardCycleTime(jiraCardResponse, boardColumns).total);
-      return CalculateStdDeviationAndAvgCycleTime(key, cardCycleTime);
-    }
-  );
-  return deviationAndCycleTime;
-}
+  // 输入卡，根据迭代得到标准差数据
+  export function CalculateDeviationAndCycleTimeBySprint(
+    cards: Cards,
+    boardColumns: RequestKanbanColumnSetting[]
+  ): DeviationCycleTimePerIteration[] {
+    const cardsGroupByIteration = GroupCardsByIteration(cards);
+    const deviationAndCycleTime = Object.keys(cardsGroupByIteration).map(
+      (key) => {
+        const matchedCardsByIteration: JiraCardResponse[] = cardsGroupByIteration[key];
+        const cardCycleTime: number[] = matchedCardsByIteration.map((jiraCardResponse) => CalculateCardCycleTime(jiraCardResponse, boardColumns).total);
+        return CalculateStdDeviationAndAvgCycleTime(key, cardCycleTime);
+      }
+    );
+    return deviationAndCycleTime;
+  }
+
+  // 输入已完成的卡，根据迭代计算卡数
+ export function CalculateCompletedCardsBySprint(
+    cards: Cards,
+  ): CompletedCardsBySprint[] {
+    const cardsGroupBySprint: Dictionary<JiraCardResponse[]> = GroupCardsByIteration(cards);
+    return Object.keys(cardsGroupBySprint).map(
+      (key) => {
+        const matchedCardsBySprint: JiraCardResponse[] = cardsGroupBySprint[key];
+        const matchedCardsNumberBySprint: number = matchedCardsBySprint.length;
+        const completedCardsBySprint: CompletedCardsBySprint = new CompletedCardsBySprint(key, matchedCardsNumberBySprint);
+        return completedCardsBySprint;
+      }
+    );
+  }
+
+  // 输入卡，根据迭代得到developing和blocked时间
+  export function CalculateDevelopingAndBlockedTimeBySprint(
+    cards: Cards,
+    boardColumns: RequestKanbanColumnSetting[]
+  ): DevelopingAndBlockTimeBySprint[] {
+    const cardsGroupBySprint: Dictionary<JiraCardResponse[]> = GroupCardsByIteration(cards);
+    return Object.keys(cardsGroupBySprint).map(
+      (key) => {
+        const matchedCardsBySprint: JiraCardResponse[] = cardsGroupBySprint[key];
+        const matchedCardsTimeBySprint: number[] = matchedCardsBySprint.map((jiraCardResponse) => CalculateCardCycleTime(jiraCardResponse, boardColumns).total);
+        const matchedCardsTotalTimebySprint: number = matchedCardsTimeBySprint.reduce((x, y) => x + y);
+        const matchedCardsBlockedTimeBySprint: number[] = matchedCardsBySprint.map((jiraCardResponse) => CalculateCardCycleTime(jiraCardResponse, boardColumns).steps.blocked);
+        const matchedCardsTotalBlockedTimeBySprint: number = matchedCardsBlockedTimeBySprint.reduce((x, y) => x + y);
+        const matchedCardsTotalDevelopingTimeBySprint: number = matchedCardsTotalTimebySprint - matchedCardsTotalBlockedTimeBySprint;
+        const developingAndblockedTimeBySprint: DevelopingAndBlockTimeBySprint = new DevelopingAndBlockTimeBySprint(key, matchedCardsTotalDevelopingTimeBySprint, matchedCardsTotalBlockedTimeBySprint);
+        return developingAndblockedTimeBySprint;
+      }
+    );
+  }
+
+  // 输入卡，根据迭代得到blocked reason和占比
+
