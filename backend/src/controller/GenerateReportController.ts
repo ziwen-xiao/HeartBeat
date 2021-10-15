@@ -4,6 +4,7 @@ import { GenerateReportRequest } from "../contract/GenerateReporter/GenerateRepo
 import { GenerateReporterResponse } from "../contract/GenerateReporter/GenerateReporterResponse";
 import { GenerateReportService } from "../services/GenerateReporter/GenerateReportService";
 import { DataSourceType } from "../models/kanban/CsvDataSourceType";
+import { GenerateExcelService } from "../services/common/GenarateExcelService";
 
 @tagsAll(["GenerateReporter"])
 export default class GenerateReportController {
@@ -14,9 +15,8 @@ export default class GenerateReportController {
   @responses((GenerateReporterResponse as any).swaggerDocument)
   public static async generateReporter(ctx: Context): Promise<void> {
     const request: GenerateReportRequest = ctx.validatedBody;
-    ctx.response.body = await new GenerateReportService().generateReporter(
-      request
-    );
+    await new GenerateExcelService().generateExcel(request);
+    ctx.response.body = await new GenerateReportService().generateReporter(request);
   }
 
   @request("get", "/exportCsv")

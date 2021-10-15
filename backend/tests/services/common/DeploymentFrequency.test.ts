@@ -15,7 +15,7 @@ import {
   DeploymentFrequencyOfPipeline,
 } from "../../../src/contract/GenerateReporter/GenerateReporterResponse";
 
-describe("DeploymentFrequency", () => {
+describe.skip("DeploymentFrequency", () => {
   const deployInfo = new DeployInfo(
     "2020-5-11",
     "2020-5-11",

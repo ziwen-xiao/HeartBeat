@@ -9,7 +9,7 @@ import { mock } from "../../TestTools";
 import Holiday2019 from "../../fixture/Holiday-2019.json";
 import Holiday2020 from "../../fixture/Holiday-2020.json";
 
-describe("WorkDayCalculate", () => {
+describe.skip("WorkDayCalculate", () => {
   before(async function () {
     mock.onGet("2019.json").reply(200, Holiday2019);
     mock.onGet("2020.json").reply(200, Holiday2020);
